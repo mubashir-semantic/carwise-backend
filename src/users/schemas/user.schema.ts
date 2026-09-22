@@ -8,6 +8,18 @@ export class User {
   @Prop({ required: true })
   username: string;
 
+  @Prop({ required: false })
+  firstName?: string;
+
+  @Prop({ required: false })
+  lastName?: string;
+
+  @Prop({ required: false })
+  address?: string;
+
+  @Prop({ required: false })
+  avatar?: string;
+
   @Prop({ required: true, unique: true })
   email: string;
 

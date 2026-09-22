@@ -3,9 +3,13 @@ import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/middleware/http-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express'; // <-- 1. Yeh import add kiya
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(json({ limit: '10mb' }));
+  app.use(urlencoded({ extended: true, limit: '10mb' }));
 
   // 1. Global Prefix (http://localhost:5000/api)
   app.setGlobalPrefix('api');
@@ -16,13 +20,13 @@ async function bootstrap() {
     defaultVersion: '1',
   });
 
-  // 3. CORS Enable karein (Frontend se connect karne ke liye)
+  // 3. CORS Enable karein
   app.enableCors();
 
   // 4. Error Handler Apply karein
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  // 5. Global Validation Pipe (NEW: DTOs validate karne ke liye)
+  // 5. Global Validation Pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -30,7 +34,7 @@ async function bootstrap() {
     }),
   );
 
-  // 6. Swagger API Documentation (NEW: APIs test karne ke liye)
+  // 6. Swagger API Documentation
   const config = new DocumentBuilder()
     .setTitle('CarWise API')
     .setDescription('Authentication & User Management APIs for CarWise')
