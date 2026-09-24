@@ -1,114 +1,139 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# CarWise Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+REST API for CarWise, a vehicle management platform for authentication, user profiles, vehicles, service history, and expense tracking.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Built with NestJS, TypeScript, MongoDB, and Mongoose. The API includes JWT authentication, OTP-based email verification and password recovery, request validation, centralized error handling, and Swagger documentation.
 
-## Description
+## Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- User signup, login, email OTP verification, and OTP resend
+- Forgot-password, reset-password, change-password, refresh-token, and logout flows
+- JWT-protected user profile read and update endpoints
+- Vehicle creation and vehicle listing
+- Service history and expense history management
+- MongoDB persistence through Mongoose schemas
+- Global validation with `class-validator` and `class-transformer`
+- Swagger UI for interactive API exploration
 
-## Project setup
+## Tech Stack
 
-```bash
-$ npm install
-```
+- Node.js and TypeScript
+- NestJS 10
+- MongoDB and Mongoose
+- Passport JWT and bcrypt
+- Nodemailer for OTP emails
+- Jest and Supertest for testing
 
-## Compile and run the project
+## Getting Started
 
-```bash
-# development
-$ npm run start
+### Prerequisites
 
-# watch mode
-$ npm run start:dev
+- Node.js 20 or newer recommended
+- npm
+- A running MongoDB instance or MongoDB Atlas database
+- SMTP credentials for email-based OTP flows
 
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
+### Installation
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cd carwise-backend
+npm install
 ```
 
-## Deployment
+Create a `.env` file in this directory:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/carwise
+NODE_ENV=development
+JWT_SECRET=replace-with-a-long-random-secret
+JWT_EXPIRES_IN=15m
+EMAIL_USER=your-email@example.com
+EMAIL_PASS=your-email-password-or-app-password
+```
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Do not commit `.env` or real credentials to source control. For Gmail, use an app password when required by the account security settings.
+
+### Run Locally
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Development
+npm run start:dev
+
+# Production build
+npm run build
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+The API runs on `http://localhost:5000` by default.
 
-## Observability
+## API Documentation
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+All versioned endpoints use the following base URL:
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+```text
+http://localhost:5000/api/v1
+```
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+Swagger UI is available at [http://localhost:5000/api/docs](http://localhost:5000/api/docs) while the server is running.
 
-## Resources
+### Endpoint Overview
 
-Check out a few resources that may come in handy when working with NestJS:
+| Area | Method | Endpoint | Auth |
+| --- | --- | --- | --- |
+| Health | `GET` | `/health` | Public |
+| Authentication | `POST` | `/auth/signup` | Public |
+| Authentication | `POST` | `/auth/login` | Public |
+| Authentication | `POST` | `/auth/verify-otp` | Public |
+| Authentication | `POST` | `/auth/resend-otp` | Public |
+| Authentication | `POST` | `/auth/forgot-password` | Public |
+| Authentication | `POST` | `/auth/reset-password` | Public |
+| Authentication | `POST` | `/auth/change-password` | Bearer token |
+| Authentication | `POST` | `/auth/refresh-token` | Refresh token |
+| Authentication | `POST` | `/auth/logout` | Bearer token |
+| Profile | `GET` | `/users/profile` | Bearer token |
+| Profile | `PUT` | `/users/profile` | Bearer token |
+| Vehicles | `POST` | `/vehicles` | Public* |
+| Vehicles | `GET` | `/vehicles` | Public* |
+| Service history | `POST` | `/service-history` | Public* |
+| Service history | `GET` | `/service-history` | Public* |
+| Expense history | `POST` | `/expense-history` | Public* |
+| Expense history | `GET` | `/expense-history` | Public* |
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+`*` Vehicle, service-history, and expense-history controllers are currently not guarded by JWT in the implementation. Review authorization and user ownership before production deployment.
 
-## Support
+## Useful Scripts
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+npm run lint       # Lint source and test files
+npm run format     # Format TypeScript files
+npm test           # Run unit tests
+npm run test:cov   # Run tests with coverage
+npm run test:e2e   # Run end-to-end tests
+```
 
-## Stay in touch
+## Project Structure
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```text
+src/
+├── auth/             # Authentication, JWT, OTP, and email services
+├── users/            # Protected user profile APIs
+├── vehicles/         # Vehicle APIs and schemas
+├── service-history/  # Service record APIs and schemas
+├── expense-history/  # Expense record APIs and schemas
+├── health/           # Health check endpoint
+├── common/           # Shared middleware and utilities
+├── app.module.ts     # Root module and database configuration
+└── main.ts           # Application bootstrap and global API configuration
+```
 
-## License
+## Security Notes
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Passwords are hashed with bcrypt before persistence.
+- Access and refresh tokens should be kept secret and rotated appropriately.
+- Use HTTPS, a strong `JWT_SECRET`, restricted CORS, and a production-grade SMTP provider in deployed environments.
+- Protect vehicle and history resources with authenticated user ownership before exposing the API publicly.
+
+## Related Project
+
+The Next.js client is in [`../carwise-frontend`](../carwise-frontend).
