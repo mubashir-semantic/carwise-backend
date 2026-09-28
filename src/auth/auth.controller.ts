@@ -44,6 +44,19 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  // --- GOOGLE OAUTH ENDPOINT (NEW) ---
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login or signup using Google access token' })
+  @ApiResponse({
+    status: 200,
+    description: 'User authenticated successfully with JWT tokens.',
+  })
+  @ApiResponse({ status: 401, description: 'Invalid Google access token.' })
+  googleLogin(@Body() body: { accessToken: string }) {
+    return this.authService.googleLogin(body.accessToken);
+  }
+
   // --- OTP ENDPOINTS ---
 
   @Post('verify-otp')
@@ -92,8 +105,8 @@ export class AuthController {
   // --- CHANGE PASSWORD ENDPOINT (FOR LOGGED-IN USERS) ---
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth() // <-- Swagger mein token ka option dega
-  @UseGuards(AuthGuard('jwt')) // <-- Yeh route sirf logged-in users ke liye hai
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Change password for logged-in user' })
   @ApiResponse({ status: 200, description: 'Password changed successfully.' })
   @ApiResponse({
@@ -101,10 +114,9 @@ export class AuthController {
     description: 'Incorrect old password or Unauthorized.',
   })
   changePassword(
-    @Req() req: any, // Token se aane wala user data isme hoga
+    @Req() req: any,
     @Body() body: { oldPassword: string; newPassword: string },
   ) {
-    // req.user.userId humein payload se milega jo login ke waqt banaya tha
     return this.authService.changePassword(
       req.user.userId,
       body.oldPassword,
@@ -128,7 +140,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt')) // Sirf logged-in user hi logout kar sakta hai
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Logout user and revoke refresh token' })
   @ApiResponse({ status: 200, description: 'Logged out successfully.' })
   logout(@Req() req: any) {

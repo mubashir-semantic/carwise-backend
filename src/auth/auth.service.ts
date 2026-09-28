@@ -80,7 +80,7 @@ export class AuthService {
     };
   }
 
-  // --- LOGIN FUNCTION (UPDATED FOR REFRESH TOKEN) ---
+  // --- LOGIN FUNCTION ---
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -102,11 +102,9 @@ export class AuthService {
 
     const payload = { userId: user._id, email: user.email, role: user.role };
 
-    // 1. Access Token (15 mins) aur Refresh Token (7 days) banayen
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    // 2. Refresh token ko database mein save karein taake baad mein verify kar sakein
     user.refreshToken = refreshToken;
     await user.save();
 
@@ -114,7 +112,7 @@ export class AuthService {
       success: true,
       message: 'Logged in successfully',
       accessToken,
-      refreshToken, // Frontend ko dono tokens bhejein
+      refreshToken,
       user: {
         id: user._id,
         username: user.username,
@@ -124,23 +122,100 @@ export class AuthService {
     };
   }
 
-  // --- REFRESH TOKEN FUNCTION (NEW) ---
+  // --- GOOGLE LOGIN & SIGNUP HANDLER (NEW) ---
+  async googleLogin(googleAccessToken: string) {
+    if (!googleAccessToken) {
+      throw new UnauthorizedException('Google access token is required');
+    }
+
+    try {
+      // 1. Google UserInfo API se user details fetch karein
+      const response = await fetch(
+        'https://www.googleapis.com/oauth2/v3/userinfo',
+        {
+          headers: {
+            Authorization: `Bearer ${googleAccessToken}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new UnauthorizedException('Invalid or expired Google token');
+      }
+
+      const googleUser = await response.json();
+      const { email, name } = googleUser;
+
+      if (!email) {
+        throw new UnauthorizedException(
+          'Google account does not have a public email address',
+        );
+      }
+
+      // 2. Database mein user check karein
+      let user = await this.userModel.findOne({ email });
+
+      // 3. Agar user nahi exist karta to auto-signup kar dein
+      if (!user) {
+        const dummyPassword = await bcrypt.hash(
+          Math.random().toString(36).slice(-10),
+          10,
+        );
+
+        user = await this.userModel.create({
+          email,
+          username: name || email.split('@')[0],
+          password: dummyPassword,
+          isEmailVerified: true, // Google email pehle se verified hoti hai
+        });
+      } else if (!user.isEmailVerified) {
+        // Agar user pehle se exist karta tha aur verify nahi hua tha
+        user.isEmailVerified = true;
+        await user.save();
+      }
+
+      // 4. JWT tokens banayein
+      const payload = { userId: user._id, email: user.email, role: user.role };
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+      user.refreshToken = refreshToken;
+      await user.save();
+
+      return {
+        success: true,
+        message: 'Google login successful',
+        accessToken,
+        refreshToken,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        },
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Google authentication failed');
+    }
+  }
+
+  // --- REFRESH TOKEN FUNCTION ---
   async refreshTokens(refreshToken: string) {
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is required');
     }
 
     try {
-      // 1. Token ko mathematically verify karein
       const payload = this.jwtService.verify(refreshToken);
 
-      // 2. Database mein check karein ke kya yeh token valid hai aur exist karta hai
       const user = await this.userModel.findById(payload.userId);
       if (!user || user.refreshToken !== refreshToken) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      // 3. Naye tokens banayen
       const newPayload = {
         userId: user._id,
         email: user.email,
@@ -153,7 +228,6 @@ export class AuthService {
         expiresIn: '7d',
       });
 
-      // 4. Naya refresh token DB mein update karein
       user.refreshToken = newRefreshToken;
       await user.save();
 
@@ -167,11 +241,10 @@ export class AuthService {
     }
   }
 
-  // --- LOGOUT FUNCTION (NEW) ---
+  // --- LOGOUT FUNCTION ---
   async logout(userId: string) {
     const user = await this.userModel.findById(userId);
     if (user) {
-      // User ka refresh token delete kar dein taake session khatam ho jaye
       user.refreshToken = undefined as any;
       await user.save();
     }
