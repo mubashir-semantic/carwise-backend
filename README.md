@@ -69,10 +69,10 @@ The API runs on `http://localhost:5000` by default.
 
 ## API Documentation
 
-All versioned endpoints use the following base URL:
+All endpoints use the following base URL:
 
 ```text
-http://localhost:5000/api/v1
+http://localhost:5000/api
 ```
 
 Swagger UI is available at [http://localhost:5000/api/docs](http://localhost:5000/api/docs) while the server is running.
@@ -81,24 +81,24 @@ Swagger UI is available at [http://localhost:5000/api/docs](http://localhost:500
 
 | Area | Method | Endpoint | Auth |
 | --- | --- | --- | --- |
-| Health | `GET` | `/health` | Public |
-| Authentication | `POST` | `/auth/signup` | Public |
-| Authentication | `POST` | `/auth/login` | Public |
-| Authentication | `POST` | `/auth/verify-otp` | Public |
-| Authentication | `POST` | `/auth/resend-otp` | Public |
-| Authentication | `POST` | `/auth/forgot-password` | Public |
-| Authentication | `POST` | `/auth/reset-password` | Public |
-| Authentication | `POST` | `/auth/change-password` | Bearer token |
-| Authentication | `POST` | `/auth/refresh-token` | Refresh token |
-| Authentication | `POST` | `/auth/logout` | Bearer token |
-| Profile | `GET` | `/users/profile` | Bearer token |
-| Profile | `PUT` | `/users/profile` | Bearer token |
-| Vehicles | `POST` | `/vehicles` | Public* |
-| Vehicles | `GET` | `/vehicles` | Public* |
-| Service history | `POST` | `/service-history` | Public* |
-| Service history | `GET` | `/service-history` | Public* |
-| Expense history | `POST` | `/expense-history` | Public* |
-| Expense history | `GET` | `/expense-history` | Public* |
+| Health | `GET` | `/api/health` | Public |
+| Authentication | `POST` | `/api/auth/signup` | Public |
+| Authentication | `POST` | `/api/auth/login` | Public |
+| Authentication | `POST` | `/api/auth/verify-otp` | Public |
+| Authentication | `POST` | `/api/auth/resend-otp` | Public |
+| Authentication | `POST` | `/api/auth/forgot-password` | Public |
+| Authentication | `POST` | `/api/auth/reset-password` | Public |
+| Authentication | `POST` | `/api/auth/change-password` | Bearer token |
+| Authentication | `POST` | `/api/auth/refresh-token` | Refresh token |
+| Authentication | `POST` | `/api/auth/logout` | Bearer token |
+| Profile | `GET` | `/api/users/profile` | Bearer token |
+| Profile | `PUT` | `/api/users/profile` | Bearer token |
+| Vehicles | `POST` | `/api/vehicles` | Public* |
+| Vehicles | `GET` | `/api/vehicles` | Public* |
+| Service history | `POST` | `/api/service-history` | Public* |
+| Service history | `GET` | `/api/service-history` | Public* |
+| Expense history | `POST` | `/api/expense-history` | Public* |
+| Expense history | `GET` | `/api/expense-history` | Public* |
 
 `*` Vehicle, service-history, and expense-history controllers are currently not guarded by JWT in the implementation. Review authorization and user ownership before production deployment.
 
@@ -133,6 +133,26 @@ src/
 - Access and refresh tokens should be kept secret and rotated appropriately.
 - Use HTTPS, a strong `JWT_SECRET`, restricted CORS, and a production-grade SMTP provider in deployed environments.
 - Protect vehicle and history resources with authenticated user ownership before exposing the API publicly.
+
+
+
+## Production Deployment Requirements (AWS + Vercel frontend)
+
+- Backend must be reachable from the public internet over HTTPS (for example through an AWS ALB/Nginx reverse proxy terminating TLS).
+- Ensure the service listens on a publicly reachable interface (`HOST=0.0.0.0`) and the runtime `PORT` matches your EC2/container/reverse-proxy configuration.
+- Security groups / firewall rules must allow ingress to the HTTPS entrypoint (`443`) and to any internal app port used behind a reverse proxy.
+- Set frontend API base URL to the public backend URL (not `localhost`), for example `https://api.example.com/api`.
+- Required production environment variables:
+  - `NODE_ENV=production`
+  - `PORT`
+  - `HOST` (recommended: `0.0.0.0`)
+  - `BACKEND_PUBLIC_URL` (used for startup logging/docs URLs)
+  - `MONGODB_URI`
+  - `JWT_SECRET`
+  - `JWT_EXPIRES_IN`
+  - `EMAIL_USER`
+  - `EMAIL_PASS`
+  - Optional: `CORS_ORIGINS` (comma-separated extra allowed origins in addition to `https://carwise-frontend.vercel.app` and local development origins)
 
 ## Related Project
 
