@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/middleware/http-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';
+import { createCorsOptions } from './config/cors.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,7 +17,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // 3. CORS enable taake Next.js frontend connect ho sake
-  app.enableCors();
+  app.enableCors(createCorsOptions());
 
   // 4. Global Error Handler
   app.useGlobalFilters(new GlobalExceptionFilter());
@@ -41,12 +42,15 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const PORT = process.env.PORT || 5000;
-  await app.listen(PORT);
+  const PORT = Number(process.env.PORT || 5000);
+  const HOST = process.env.HOST || '0.0.0.0';
+  await app.listen(PORT, HOST);
 
-  console.log(`🚀 CarWise Backend is running on: http://localhost:${PORT}/api`);
+  const publicApiUrl =
+    process.env.BACKEND_PUBLIC_URL || `http://localhost:${PORT}`;
+  console.log(`🚀 CarWise Backend is running on: ${publicApiUrl}/api`);
   console.log(
-    `📖 Swagger API Docs available at: http://localhost:${PORT}/api/docs`,
+    `📖 Swagger API Docs available at: ${publicApiUrl}/api/docs`,
   );
 }
 bootstrap();
