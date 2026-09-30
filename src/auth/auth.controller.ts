@@ -4,13 +4,21 @@ import {
   Body,
   HttpCode,
   HttpStatus,
-  Get,
   UseGuards,
   Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import {
+  GoogleLoginDto,
+  VerifyOtpDto,
+  ResendOtpDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  ChangePasswordDto,
+  RefreshTokenDto,
+} from './dto/auth-extra.dto';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -44,7 +52,7 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  // --- GOOGLE OAUTH ENDPOINT (NEW) ---
+  // --- GOOGLE OAUTH ENDPOINT ---
   @Post('google')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login or signup using Google access token' })
@@ -53,18 +61,17 @@ export class AuthController {
     description: 'User authenticated successfully with JWT tokens.',
   })
   @ApiResponse({ status: 401, description: 'Invalid Google access token.' })
-  googleLogin(@Body() body: { accessToken: string }) {
+  googleLogin(@Body() body: GoogleLoginDto) {
     return this.authService.googleLogin(body.accessToken);
   }
 
   // --- OTP ENDPOINTS ---
-
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify user email using OTP' })
   @ApiResponse({ status: 200, description: 'Email verified successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired OTP.' })
-  verifyOtp(@Body() body: { email: string; otp: string }) {
+  verifyOtp(@Body() body: VerifyOtpDto) {
     return this.authService.verifyOtp(body.email, body.otp);
   }
 
@@ -73,7 +80,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Resend OTP to user email' })
   @ApiResponse({ status: 200, description: 'OTP resent successfully.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  resendOtp(@Body() body: { email: string }) {
+  resendOtp(@Body() body: ResendOtpDto) {
     return this.authService.resendOtp(body.email);
   }
 
@@ -83,7 +90,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Send OTP to email for password reset' })
   @ApiResponse({ status: 200, description: 'OTP sent successfully.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  forgotPassword(@Body() body: { email: string }) {
+  forgotPassword(@Body() body: ForgotPasswordDto) {
     return this.authService.forgotPassword(body.email);
   }
 
@@ -92,9 +99,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify OTP and set new password' })
   @ApiResponse({ status: 200, description: 'Password reset successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired OTP.' })
-  resetPassword(
-    @Body() body: { email: string; otp: string; newPassword: string },
-  ) {
+  resetPassword(@Body() body: ResetPasswordDto) {
     return this.authService.resetPassword(
       body.email,
       body.otp,
@@ -113,10 +118,7 @@ export class AuthController {
     status: 401,
     description: 'Incorrect old password or Unauthorized.',
   })
-  changePassword(
-    @Req() req: any,
-    @Body() body: { oldPassword: string; newPassword: string },
-  ) {
+  changePassword(@Req() req: any, @Body() body: ChangePasswordDto) {
     return this.authService.changePassword(
       req.user.userId,
       body.oldPassword,
@@ -133,7 +135,7 @@ export class AuthController {
     status: 401,
     description: 'Invalid or missing refresh token.',
   })
-  refreshTokens(@Body() body: { refreshToken: string }) {
+  refreshTokens(@Body() body: RefreshTokenDto) {
     return this.authService.refreshTokens(body.refreshToken);
   }
 
