@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "incremental": false,
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
@@ -14,7 +15,6 @@
     "types": ["node", "jest"],
     "sourceMap": true,
     "outDir": "./dist",
-    "incremental": true,
     "skipLibCheck": true,
     "strict": true,
     "strictPropertyInitialization": false
