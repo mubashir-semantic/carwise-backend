@@ -6,38 +6,58 @@ import {
   Delete,
   Body,
   Param,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ExpenseHistoryService } from './expense-history.service';
 import { CreateExpenseHistoryDto } from './dto/create-expense-history.dto';
 import { UpdateExpenseHistoryDto } from './dto/update-expense-history.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../auth/roles.enum';
 
 @ApiTags('Expense History')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('expense-history')
 export class ExpenseHistoryController {
   constructor(private readonly expenseHistoryService: ExpenseHistoryService) {}
 
   @Post()
+  @Roles(Role.CUSTOMER, Role.ADMIN, Role.WORKSHOP_STAFF)
   @ApiOperation({ summary: 'Add a new expense history record' })
   @ApiResponse({
     status: 201,
     description: 'Expense record successfully created.',
   })
-  async create(@Body() createDto: CreateExpenseHistoryDto) {
-    return this.expenseHistoryService.create(createDto);
+  async create(
+    @Body() createDto: CreateExpenseHistoryDto,
+    @Request() req: any,
+  ) {
+    return this.expenseHistoryService.create(createDto, req.user.userId);
   }
 
   @Get()
+  @Roles(Role.CUSTOMER, Role.ADMIN, Role.WORKSHOP_STAFF)
   @ApiOperation({ summary: 'Get all expense history records' })
   @ApiResponse({
     status: 200,
     description: 'Returns a list of expense histories.',
   })
-  async findAll() {
-    return this.expenseHistoryService.findAll();
+  async findAll(@Request() req: any) {
+    return this.expenseHistoryService.findAll(req.user);
   }
 
   @Get(':id')
+  @Roles(Role.CUSTOMER, Role.ADMIN, Role.WORKSHOP_STAFF)
   @ApiOperation({ summary: 'Get a single expense history record by id' })
   @ApiParam({
     name: 'id',
@@ -52,6 +72,7 @@ export class ExpenseHistoryController {
   }
 
   @Put(':id')
+  @Roles(Role.CUSTOMER, Role.ADMIN, Role.WORKSHOP_STAFF)
   @ApiOperation({ summary: 'Update an expense history record' })
   @ApiParam({
     name: 'id',
@@ -72,6 +93,7 @@ export class ExpenseHistoryController {
   }
 
   @Delete(':id')
+  @Roles(Role.CUSTOMER, Role.ADMIN)
   @ApiOperation({ summary: 'Delete an expense history record' })
   @ApiParam({
     name: 'id',

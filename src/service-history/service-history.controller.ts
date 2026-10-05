@@ -6,38 +6,58 @@ import {
   Delete,
   Body,
   Param,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ServiceHistoryService } from './service-history.service';
 import { CreateServiceHistoryDto } from './dto/create-service-history.dto';
 import { UpdateServiceHistoryDto } from './dto/update-service-history.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../auth/roles.enum';
 
 @ApiTags('Service History')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('service-history')
 export class ServiceHistoryController {
   constructor(private readonly serviceHistoryService: ServiceHistoryService) {}
 
   @Post()
+  @Roles(Role.CUSTOMER, Role.ADMIN, Role.WORKSHOP_STAFF)
   @ApiOperation({ summary: 'Add a new service history record' })
   @ApiResponse({
     status: 201,
     description: 'Service record successfully created.',
   })
-  async create(@Body() createDto: CreateServiceHistoryDto) {
-    return this.serviceHistoryService.create(createDto);
+  async create(
+    @Body() createDto: CreateServiceHistoryDto,
+    @Request() req: any,
+  ) {
+    return this.serviceHistoryService.create(createDto, req.user.userId);
   }
 
   @Get()
+  @Roles(Role.CUSTOMER, Role.ADMIN, Role.WORKSHOP_STAFF)
   @ApiOperation({ summary: 'Get all service history records' })
   @ApiResponse({
     status: 200,
     description: 'Returns a list of service histories.',
   })
-  async findAll() {
-    return this.serviceHistoryService.findAll();
+  async findAll(@Request() req: any) {
+    return this.serviceHistoryService.findAll(req.user);
   }
 
   @Get(':id')
+  @Roles(Role.CUSTOMER, Role.ADMIN, Role.WORKSHOP_STAFF)
   @ApiOperation({ summary: 'Get a single service history record by id' })
   @ApiParam({
     name: 'id',
@@ -52,6 +72,7 @@ export class ServiceHistoryController {
   }
 
   @Put(':id')
+  @Roles(Role.CUSTOMER, Role.ADMIN, Role.WORKSHOP_STAFF)
   @ApiOperation({ summary: 'Update a service history record' })
   @ApiParam({
     name: 'id',
@@ -72,6 +93,7 @@ export class ServiceHistoryController {
   }
 
   @Delete(':id')
+  @Roles(Role.CUSTOMER, Role.ADMIN)
   @ApiOperation({ summary: 'Delete a service history record' })
   @ApiParam({
     name: 'id',

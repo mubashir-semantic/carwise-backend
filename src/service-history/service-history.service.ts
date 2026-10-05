@@ -8,6 +8,7 @@ import { isValidObjectId, Model } from 'mongoose';
 import { ServiceHistory } from './schemas/service-history.schema';
 import { CreateServiceHistoryDto } from './dto/create-service-history.dto';
 import { UpdateServiceHistoryDto } from './dto/update-service-history.dto';
+import { Role } from '../auth/roles.enum';
 
 @Injectable()
 export class ServiceHistoryService {
@@ -16,19 +17,30 @@ export class ServiceHistoryService {
     private serviceModel: Model<ServiceHistory>,
   ) {}
 
-  // Galat id par 500 ki jagah 400 dene ke liye
   private assertValidId(id: string) {
     if (!isValidObjectId(id)) {
       throw new BadRequestException('Invalid service history id');
     }
   }
 
-  async create(createDto: CreateServiceHistoryDto): Promise<ServiceHistory> {
-    const newService = new this.serviceModel(createDto);
+  async create(
+    createDto: CreateServiceHistoryDto,
+    userId: string,
+  ): Promise<ServiceHistory> {
+    const newService = new this.serviceModel({
+      ...createDto,
+      userId,
+    });
     return newService.save();
   }
 
-  async findAll(): Promise<ServiceHistory[]> {
+  async findAll(user: any): Promise<ServiceHistory[]> {
+    if (user.role === Role.CUSTOMER) {
+      return this.serviceModel
+        .find({ userId: user.userId })
+        .sort({ createdAt: -1 })
+        .exec();
+    }
     return this.serviceModel.find().sort({ createdAt: -1 }).exec();
   }
 

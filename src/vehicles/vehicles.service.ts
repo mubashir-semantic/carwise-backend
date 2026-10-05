@@ -8,6 +8,7 @@ import { isValidObjectId, Model } from 'mongoose';
 import { Vehicle } from './schemas/vehicle.schema';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
+import { Role } from '../auth/roles.enum'; // Role enum import kiya hai
 
 @Injectable()
 export class VehiclesService {
@@ -22,13 +23,28 @@ export class VehiclesService {
     }
   }
 
-  async create(createVehicleDto: CreateVehicleDto): Promise<Vehicle> {
-    const newVehicle = new this.vehicleModel(createVehicleDto);
+  // Yahan userId parameter add kiya gaya hai
+  async create(
+    createVehicleDto: CreateVehicleDto,
+    userId: string,
+  ): Promise<Vehicle> {
+    const newVehicle = new this.vehicleModel({
+      ...createVehicleDto,
+      userId, // DTO ke sath userId save karwa rahe hain
+    });
     return newVehicle.save();
   }
 
-  async findAll(): Promise<Vehicle[]> {
-    // Jab auth link hoga, toh yahan find({ userId }) lagayenge.
+  // Yahan user object parameter add kiya gaya hai aur role check lagaya hai
+  async findAll(user: any): Promise<Vehicle[]> {
+    // Agar customer hai toh sirf uski apni gaariyan dikhao
+    if (user.role === Role.CUSTOMER) {
+      return this.vehicleModel
+        .find({ userId: user.userId })
+        .sort({ createdAt: -1 })
+        .exec();
+    }
+    // Admin aur Workshop Staff ko saari gaariyan dikhao
     return this.vehicleModel.find().sort({ createdAt: -1 }).exec();
   }
 
