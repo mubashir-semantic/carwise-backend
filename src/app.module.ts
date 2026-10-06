@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { ServiceHistoryModule } from './service-history/service-history.module';
 import { ExpenseHistoryModule } from './expense-history/expense-history.module';
+import { validateEnvironment } from './config/environment.validation';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ExpenseHistoryModule } from './expense-history/expense-history.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validate: validateEnvironment,
     }),
 
     // MongoDB connection configuration
