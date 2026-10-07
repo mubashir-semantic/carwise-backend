@@ -32,4 +32,12 @@ export class UsersController {
   updateProfile(@Req() req: any, @Body() updateProfileDto: UpdateProfileDto) {
     return this.usersService.updateProfile(req.user.userId, updateProfileDto);
   }
+
+  // users.controller.ts mein getProfile aur updateProfile ke sath yeh add karein
+  @Get()
+  @ApiOperation({ summary: 'Get all users for chat contacts' })
+  @ApiResponse({ status: 200, description: 'Users fetched successfully.' })
+  getAllUsers(@Req() req: any) {
+    return this.usersService.getAllUsers(req.user.userId);
+  }
 }

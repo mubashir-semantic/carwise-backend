@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { Role } from '../../auth/roles.enum';
 
 export type UserDocument = User & Document;
 
@@ -29,7 +30,8 @@ export class User {
   @Prop({ required: false })
   mobile: string;
 
-  @Prop({ default: 'user' })
+  // Yahan role ko update kiya gaya hai
+  @Prop({ default: Role.CUSTOMER, enum: Role })
   role: string;
 
   @Prop({ default: false })

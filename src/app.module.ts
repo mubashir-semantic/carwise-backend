@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { ServiceHistoryModule } from './service-history/service-history.module';
 import { ExpenseHistoryModule } from './expense-history/expense-history.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ExpenseHistoryModule } from './expense-history/expense-history.module';
     VehiclesModule,
     ServiceHistoryModule,
     ExpenseHistoryModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
