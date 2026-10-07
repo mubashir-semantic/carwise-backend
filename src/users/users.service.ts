@@ -10,7 +10,6 @@ export class UsersService {
 
   // 1. GET PROFILE LOGIC
   async getProfile(userId: string) {
-    // .select('-password -otp ...') ka matlab hai ke security ki wajah se password aur OTP details frontend ko na bheji jayen
     const user = await this.userModel
       .findById(userId)
       .select(
@@ -30,7 +29,6 @@ export class UsersService {
 
   // 2. UPDATE PROFILE LOGIC
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
-    // new: true se updated document wapis aata hai
     const updatedUser = await this.userModel
       .findByIdAndUpdate(
         userId,
@@ -50,5 +48,16 @@ export class UsersService {
       message: 'Profile updated successfully',
       user: updatedUser,
     };
+  }
+
+  // 3. GET ALL USERS LOGIC (For Chat Contacts)
+  async getAllUsers(currentUserId: string) {
+    const users = await this.userModel
+      .find({ _id: { $ne: currentUserId } })
+      // YAHAN CHANGE HAI: 'username' aur 'avatar' lazmi add karein
+      .select('name username email role avatar')
+      .exec();
+
+    return users;
   }
 }
