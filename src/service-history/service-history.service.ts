@@ -9,18 +9,31 @@ import { ServiceHistory } from './schemas/service-history.schema';
 import { CreateServiceHistoryDto } from './dto/create-service-history.dto';
 import { UpdateServiceHistoryDto } from './dto/update-service-history.dto';
 import { Role } from '../auth/roles.enum';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ServiceHistoryService {
   constructor(
     @InjectModel(ServiceHistory.name)
     private serviceModel: Model<ServiceHistory>,
+    private notificationsService: NotificationsService,
   ) {}
 
   private assertValidId(id: string) {
     if (!isValidObjectId(id)) {
       throw new BadRequestException('Invalid service history id');
     }
+  }
+
+  // Record ke owner ko notification bhejna (fail bhi ho to asli kaam nahi rukta)
+  private async notifyOwner(record: unknown, text: string) {
+    const ownerId = (record as { userId?: unknown }).userId;
+    if (!ownerId) return;
+    await this.notificationsService.notify({
+      recipientId: String(ownerId),
+      text,
+      category: 'service',
+    });
   }
 
   async create(
@@ -31,7 +44,16 @@ export class ServiceHistoryService {
       ...createDto,
       userId,
     });
-    return newService.save();
+    const saved = await newService.save();
+
+    // Notification: service record add hone par (fail bhi ho to record save rahega)
+    await this.notificationsService.notify({
+      recipientId: userId,
+      text: 'A new service record was added to your service history.',
+      category: 'service',
+    });
+
+    return saved;
   }
 
   async findAll(user: any): Promise<ServiceHistory[]> {
@@ -64,6 +86,10 @@ export class ServiceHistoryService {
     if (!record) {
       throw new NotFoundException('Service history record not found');
     }
+    await this.notifyOwner(
+      record,
+      'A service record in your history was updated.',
+    );
     return record;
   }
 
@@ -73,6 +99,10 @@ export class ServiceHistoryService {
     if (!record) {
       throw new NotFoundException('Service history record not found');
     }
+    await this.notifyOwner(
+      record,
+      'A service record was deleted from your history.',
+    );
     return { message: 'Service history record deleted successfully' };
   }
 }

@@ -6,6 +6,7 @@ import { ChatController } from './chat.controller';
 import { Message, MessageSchema } from './schemas/message.schema';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -17,9 +18,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         secret: configService.get<string>('JWT_SECRET'),
       }),
     }),
+    NotificationsModule, // Naye message par notification bhejne ke liye
   ],
   controllers: [ChatController], // Controller add kiya
   providers: [ChatGateway, ChatService], // Service add ki
   exports: [ChatService],
 })
 export class ChatModule {}
+  

@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @WebSocketGateway({
   cors: {
@@ -26,6 +27,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private jwtService: JwtService,
     private chatService: ChatService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -106,6 +108,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         messageId: savedMessage._id,
         tempId: data.tempId, // <-- Yeh update kiya taake frontend pehchan sake
       });
+    } else {
+      // Receiver chat par online nahi hai -> uski bell mein notification bhejo
+      const text = savedMessage.text || '';
+      const preview = text
+        ? text.length > 60
+          ? `${text.slice(0, 57)}...`
+          : text
+        : '📷 Photo';
+
+      await this.notificationsService.notifyNewMessage(
+        senderId,
+        data.receiverId,
+        preview,
+      );
     }
   }
 }
