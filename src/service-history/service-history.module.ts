@@ -6,12 +6,14 @@ import {
   ServiceHistory,
   ServiceHistorySchema,
 } from './schemas/service-history.schema';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: ServiceHistory.name, schema: ServiceHistorySchema },
     ]),
+    NotificationsModule,
   ],
   controllers: [ServiceHistoryController],
   providers: [ServiceHistoryService],
