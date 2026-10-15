@@ -16,6 +16,7 @@ import { ROLES_KEY } from './roles.decorator';
 //
 // Role token se nahi, DB se padhte hain. Is tarah admin kisi ka role badle
 // to purana token bhi naye role ke saath hi chalta hai.
+// Deactivated (isActive: false) user ka purana token bhi foran band ho jata hai.
 // Guard request par req.user.role (normalized) bhi set kar deta hai,
 // jise controllers/services aage use karte hain.
 @Injectable()
@@ -35,12 +36,17 @@ export class RolesGuard implements CanActivate {
     const userDoc = await this.connection
       .model('User')
       .findById(userId)
-      .select('role')
-      .lean<{ role?: string }>()
+      .select('role isActive')
+      .lean<{ role?: string; isActive?: boolean }>()
       .exec();
 
     if (!userDoc) {
       throw new UnauthorizedException('User no longer exists');
+    }
+    if (userDoc.isActive === false) {
+      throw new ForbiddenException(
+        'Your account has been deactivated. Please contact support.',
+      );
     }
 
     const role = normalizeRole(userDoc.role);

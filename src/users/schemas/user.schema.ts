@@ -34,6 +34,9 @@ export class User {
   @Prop({ default: Role.CUSTOMER, enum: Role })
   role: string;
 
+  @Prop({ default: true })
+  isActive: boolean;
+
   @Prop({ default: false })
   isEmailVerified: boolean;
 
