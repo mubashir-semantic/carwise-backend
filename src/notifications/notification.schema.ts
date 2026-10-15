@@ -47,6 +47,10 @@ export class Notification {
 
   @Prop({ type: Boolean, default: false })
   isRead: boolean;
+
+  // Admin ne broadcast bheji ho to uska record (history / read count ke liye)
+  @Prop({ type: Types.ObjectId, ref: 'AdminNotification', index: true })
+  campaign?: Types.ObjectId;
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);

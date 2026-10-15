@@ -89,6 +89,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    if (user.isActive === false) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
     if (!user.isEmailVerified) {
       throw new UnauthorizedException(
         'Please verify your email address first. Check your inbox for the OTP.',
@@ -168,10 +172,15 @@ export class AuthService {
           password: dummyPassword,
           isEmailVerified: true, // Google email pehle se verified hoti hai
         });
-      } else if (!user.isEmailVerified) {
-        // Agar user pehle se exist karta tha aur verify nahi hua tha
-        user.isEmailVerified = true;
-        await user.save();
+      } else {
+        if (user.isActive === false) {
+          throw new UnauthorizedException('Account is deactivated');
+        }
+        if (!user.isEmailVerified) {
+          // Agar user pehle se exist karta tha aur verify nahi hua tha
+          user.isEmailVerified = true;
+          await user.save();
+        }
       }
 
       // 4. JWT tokens banayein
@@ -214,6 +223,10 @@ export class AuthService {
       const user = await this.userModel.findById(payload.userId);
       if (!user || user.refreshToken !== refreshToken) {
         throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      if (user.isActive === false) {
+        throw new UnauthorizedException('Account is deactivated');
       }
 
       const newPayload = {
