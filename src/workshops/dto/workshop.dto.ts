@@ -5,9 +5,12 @@ import {
   IsIn,
   IsMongoId,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 import { WORKSHOP_STATUSES } from '../workshop.schema';
 import type { WorkshopStatus } from '../workshop.schema';
@@ -47,6 +50,20 @@ export class CreateWorkshopDto {
   @IsString()
   @MaxLength(80)
   city?: string;
+
+  @ApiPropertyOptional({ example: 31.5204, description: 'Latitude (-90 to 90)' })
+  @IsOptional()
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude?: number;
+
+  @ApiPropertyOptional({ example: 74.3587, description: 'Longitude (-180 to 180)' })
+  @IsOptional()
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude?: number;
 
   @ApiPropertyOptional({ type: [String], description: 'Image URLs' })
   @IsOptional()

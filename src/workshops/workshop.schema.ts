@@ -26,18 +26,22 @@ export class Workshop {
   @Prop({ type: String, trim: true })
   city?: string;
 
+  // Map par dikhane ke liye (optional). Admin / staff set karte hain.
+  @Prop({ type: Number, min: -90, max: 90 })
+  latitude?: number;
+
+  @Prop({ type: Number, min: -180, max: 180 })
+  longitude?: number;
+
   @Prop({ type: [String], default: [] })
   images: string[];
 
-  // Workshop jo services deta hai (jaise "Oil Change", "Tyre Rotation")
   @Prop({ type: [String], default: [] })
   services: string[];
 
   @Prop({ type: String, enum: WORKSHOP_STATUSES, default: 'active' })
   status: WorkshopStatus;
 
-  // Is workshop ka staff. User schema ko chhedne ki zaroorat nahi padti:
-  // "mera workshop" = wo workshop jiske staff mein mera id ho.
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
   staff: Types.ObjectId[];
 }
