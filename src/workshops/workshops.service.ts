@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { isValidObjectId, Model } from 'mongoose';
+import { isValidObjectId, Model, Types } from 'mongoose';
 import { normalizeRole, Role } from '../access-control/role.enum';
 import { Workshop, WorkshopDocument } from './workshop.schema';
 import {
@@ -31,6 +31,12 @@ export function parsePaging(page?: string, limit?: string) {
   return { page: safePage, limit: safeLimit, skip: (safePage - 1) * safeLimit };
 }
 
+// Id DB mein ObjectId ya string, dono shakal mein ho sakti hai.
+// Query mein dono shakal bhejte hain taake match hamesha ho.
+export function idForms(id: string): any[] {
+  return isValidObjectId(id) ? [id, new Types.ObjectId(id)] : [id];
+}
+
 export function escapeRegex(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -51,6 +57,23 @@ export class WorkshopsService {
   // Ye model 'User' schema se jura hota hai jo Auth module ne register kiya hai
   private get userModel() {
     return this.model.db.model('User');
+  }
+
+  // Staff ke ids se user ka data laate hain (populate par depend nahi karte,
+  // taake id string ho ya ObjectId, dono mein naam aur email aayein)
+  private async withStaff<T extends { staff?: unknown[] }>(
+    workshop: T,
+  ): Promise<Record<string, any>> {
+    const ids = (workshop.staff ?? [])
+      .map((s: any) => String(s?._id ?? s))
+      .filter((id) => isValidObjectId(id));
+    const users = ids.length
+      ? await this.userModel
+          .find({ _id: { $in: ids } })
+          .select(STAFF_FIELDS)
+          .lean()
+      : [];
+    return { ...workshop, staff: users };
   }
 
   async create(dto: CreateWorkshopDto) {
@@ -102,13 +125,12 @@ export class WorkshopsService {
   // Workshop Staff: apna workshop
   async findMine(userId: string): Promise<Record<string, any>> {
     const workshop = await this.model
-      .findOne({ staff: userId })
-      .populate('staff', STAFF_FIELDS)
+      .findOne({ staff: { $in: idForms(userId) } })
       .lean();
     if (!workshop) {
       throw new NotFoundException('No workshop is assigned to your account');
     }
-    return workshop;
+    return this.withStaff(workshop);
   }
 
   async findOne(id: string, user: AuthUser): Promise<Record<string, any>> {
@@ -121,12 +143,7 @@ export class WorkshopsService {
       workshop.staff.some((s) => String(s) === user.userId);
 
     if (user.role === Role.Admin || isOwnStaff) {
-      const full = await this.model
-        .findById(id)
-        .populate('staff', STAFF_FIELDS)
-        .lean();
-      if (!full) throw new NotFoundException('Workshop not found');
-      return full;
+      return this.withStaff(workshop);
     }
 
     // Baqi log sirf active workshop dekh sakte hain, staff list ke baghair
@@ -161,12 +178,9 @@ export class WorkshopsService {
 
     workshop.set(data);
     await workshop.save();
-    const updated = await this.model
-      .findById(id)
-      .populate('staff', STAFF_FIELDS)
-      .lean();
+    const updated = await this.model.findById(id).lean();
     if (!updated) throw new NotFoundException('Workshop not found');
-    return updated;
+    return this.withStaff(updated);
   }
 
   async setStatus(
@@ -215,11 +229,18 @@ export class WorkshopsService {
       .exec();
     if (!user) throw new NotFoundException('User not found');
 
-    const workshop = await this.model
-      .findByIdAndUpdate(id, { $addToSet: { staff: userId } }, { new: true })
-      .populate('staff', STAFF_FIELDS)
-      .lean();
-    if (!workshop) throw new NotFoundException('Workshop not found');
+    const existing = await this.model.findById(id).lean();
+    if (!existing) throw new NotFoundException('Workshop not found');
+    const alreadyStaff = (existing.staff ?? []).some(
+      (s) => String(s) === userId,
+    );
+    const updatedDoc = alreadyStaff
+      ? existing
+      : await this.model
+          .findByIdAndUpdate(id, { $addToSet: { staff: userId } }, { new: true })
+          .lean();
+    if (!updatedDoc) throw new NotFoundException('Workshop not found');
+    const workshop = await this.withStaff(updatedDoc);
 
     // Admin ka role kabhi nahi badalte. Baqi ko Workshop Staff bana dete hain.
     if (normalizeRole(user.role) !== Role.Admin) {
@@ -237,11 +258,14 @@ export class WorkshopsService {
   ): Promise<Record<string, any>> {
     this.assertId(id);
     this.assertId(userId, 'user');
-    const workshop = await this.model
-      .findByIdAndUpdate(id, { $pull: { staff: userId } }, { new: true })
-      .populate('staff', STAFF_FIELDS)
+    const updatedDoc = await this.model
+      .findByIdAndUpdate(
+        id,
+        { $pull: { staff: { $in: idForms(userId) } } },
+        { new: true },
+      )
       .lean();
-    if (!workshop) throw new NotFoundException('Workshop not found');
-    return workshop;
+    if (!updatedDoc) throw new NotFoundException('Workshop not found');
+    return this.withStaff(updatedDoc);
   }
 }
