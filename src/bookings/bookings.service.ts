@@ -10,7 +10,7 @@ import { isValidObjectId, Model } from 'mongoose';
 import { Role } from '../access-control/role.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Workshop, WorkshopDocument } from '../workshops/workshop.schema';
-import { escapeRegex, parsePaging } from '../workshops/workshops.service';
+import { escapeRegex, idForms, parsePaging } from '../workshops/workshops.service';
 import type { AuthUser } from '../workshops/workshops.service';
 import { Booking } from './booking.schema';
 import type { BookingDocument, BookingStatus } from './booking.schema';
@@ -69,10 +69,11 @@ export class BookingsService {
   // Staff ke workshops ke ids
   private async workshopIdsOfStaff(userId: string) {
     const workshops = await this.workshopModel
-      .find({ staff: userId })
+      .find({ staff: { $in: idForms(userId) } })
       .select('_id')
       .lean();
-    return workshops.map((w) => w._id);
+    // Booking mein workshop id string ho ya ObjectId, dono se match karo
+    return workshops.flatMap((w) => idForms(String(w._id)));
   }
 
   private populateAll<T extends { populate: (...args: any[]) => any }>(q: T) {
@@ -181,7 +182,7 @@ export class BookingsService {
       }
       filter.workshop = { $in: ids };
     } else if (user.role === Role.Customer) {
-      filter.customer = user.userId;
+      filter.customer = { $in: idForms(user.userId) };
     } else if (query.workshopId) {
       filter.workshop = query.workshopId;
     }
